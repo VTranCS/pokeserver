@@ -33,7 +33,7 @@ func getPokemonByURL(url string) Pokemon {
 }
 
 func getPokemon() Pokemon {
-	url := "https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0"
+	url := "https://pokeapi.co/api/v2/pokemon?limit=151"
 	resp, getErr := http.Get(url)
 	if getErr != nil || resp.StatusCode != 200 {
 		log.Fatal(resp.StatusCode)
@@ -50,7 +50,7 @@ func getPokemon() Pokemon {
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
-	var i = rand.IntN(pokeSum.Count)
+	var i = rand.IntN(len(pokeSum.Results))
 	fmt.Printf("Pokemon id: %d\n", i)
 	return getPokemonByURL(pokeSum.Results[i].URL)
 }
