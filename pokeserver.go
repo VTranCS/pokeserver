@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "context"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,7 +9,9 @@ import (
 	"log"
 	"math/rand/v2"
 	"net/http"
-	// "github.com/jackc/pgx/v4"
+	"os"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func getPokemonByURL(url string) Pokemon {
@@ -33,7 +35,7 @@ func getPokemonByURL(url string) Pokemon {
 }
 
 func getPokemon() Pokemon {
-	url := "https://pokeapi.co/api/v2/pokemon?limit=151"
+	url := "https://pokeapi.co/api/v2/pokemon?limit=20"
 	resp, getErr := http.Get(url)
 	if getErr != nil || resp.StatusCode != 200 {
 		log.Fatal(resp.StatusCode)
@@ -51,18 +53,66 @@ func getPokemon() Pokemon {
 		log.Fatal(jsonErr)
 	}
 	var i = rand.IntN(len(pokeSum.Results))
-	fmt.Printf("Pokemon id: %d\n", i)
 	return getPokemonByURL(pokeSum.Results[i].URL)
 }
 
 func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 	var myPokemon = getPokemon()
+	getPokemonVote(myPokemon.Name)
+	updatePokemonVote(myPokemon.Name, rand.IntN(20))
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprintf(w, "<html><body><h1>%v</h1> "+
 		"<img src=\"%v\"></body></html>", myPokemon.Name, myPokemon.Sprites.FrontDefault)
 }
 
+func getPokemonVote(pokename string) int {
+	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE name = $1", pokename)
+	var vote int
+	var name string
+
+	for rows.Next() {
+		err := rows.Scan(&name, &vote)
+		if err != nil {
+			log.Print(err.Error())
+		}
+		// fmt.Printf("%d. %s\n", vote, name)
+	}
+
+	if rows.CommandTag().RowsAffected() < 1 {
+		createPokemonVote(pokename)
+	}
+	return vote
+}
+
+func createPokemonVote(pokename string) bool {
+	_, err := conn.Exec(context.Background(), "insert into pokevotes values($1,$2)", pokename, 0)
+	if err != nil {
+		log.Print(err.Error())
+		return false
+	}
+	return true
+}
+
+func updatePokemonVote(pokename string, vote int) bool {
+	_, err := conn.Exec(context.Background(), "UPDATE pokevotes SET vote= vote + $1 WHERE name=$2", vote, pokename)
+	if err != nil {
+		log.Print(err.Error())
+		return false
+	}
+	return true
+}
+
+var conn *pgx.Conn
+
 func main() {
+
+	var err error
+	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
+		os.Exit(1)
+	}
+
 	http.HandleFunc("/", handlePokeStop)
 
 	fmt.Printf("Started poke app")
