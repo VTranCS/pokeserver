@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math/rand/v2"
@@ -14,6 +15,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type PageData struct {
+	Title string
+	Name  string
+	Image string
+}
+
+// Retrieve specific Pokemon Data for PokeApi
 func getPokemonByURL(url string) Pokemon {
 	resp, getErr := http.Get(url)
 	if getErr != nil || resp.StatusCode != 200 {
@@ -35,7 +43,7 @@ func getPokemonByURL(url string) Pokemon {
 }
 
 func getPokemon() Pokemon {
-	url := "https://pokeapi.co/api/v2/pokemon?limit=20"
+	url := "https://pokeapi.co/api/v2/pokemon?limit=151"
 	resp, getErr := http.Get(url)
 	if getErr != nil || resp.StatusCode != 200 {
 		log.Fatal(resp.StatusCode)
@@ -56,15 +64,21 @@ func getPokemon() Pokemon {
 	return getPokemonByURL(pokeSum.Results[i].URL)
 }
 
+// Handler for root endpoint
 func handlePokeStop(w http.ResponseWriter, r *http.Request) {
-	var myPokemon = getPokemon()
+	myPokemon := getPokemon()
+	pageData := PageData{
+		Title: "PokeServer",
+		Name:  myPokemon.Name,
+		Image: myPokemon.Sprites.FrontDefault,
+	}
 	getPokemonVote(myPokemon.Name)
 	updatePokemonVote(myPokemon.Name, rand.IntN(20))
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, "<html><body><h1>%v</h1> "+
-		"<img src=\"%v\"></body></html>", myPokemon.Name, myPokemon.Sprites.FrontDefault)
+	tmpl := template.Must(template.ParseFiles("templates/index.html"))
+	tmpl.Execute(w, pageData)
 }
 
+// get the number of votes for a pokemon
 func getPokemonVote(pokename string) int {
 	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE name = $1", pokename)
 	var vote int
@@ -75,7 +89,6 @@ func getPokemonVote(pokename string) int {
 		if err != nil {
 			log.Print(err.Error())
 		}
-		// fmt.Printf("%d. %s\n", vote, name)
 	}
 
 	if rows.CommandTag().RowsAffected() < 1 {
@@ -84,6 +97,7 @@ func getPokemonVote(pokename string) int {
 	return vote
 }
 
+// Create the entry in the pokevotes tables
 func createPokemonVote(pokename string) bool {
 	_, err := conn.Exec(context.Background(), "insert into pokevotes values($1,$2)", pokename, 0)
 	if err != nil {
