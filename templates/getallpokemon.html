@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{.Title}}</title>
+</head>
+<body>
+    {{range .Pokemon}}
+	<h1>{{.Name}}</h1>
+    <h2>ID: {{.Id}}</h2>
+    <h2>Votes: {{.Vote}}</h2>
+	<img src="{{.Url}}">
+    <hr class="solid">
+    {{end}}
+</body>
+</html>

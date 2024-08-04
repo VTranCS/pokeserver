@@ -11,14 +11,69 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 )
 
-type PageData struct {
-	Title string
-	Name  string
-	Image string
+var conn *pgx.Conn
+
+func main() {
+
+	var err error
+	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
+		os.Exit(1)
+	}
+
+	http.HandleFunc("/", handlePokeStop)
+	http.HandleFunc("/getall", handleShowAllPokemon)
+	http.HandleFunc("/vote", handleVote)
+
+	fmt.Printf("Started poke app")
+	httperr := http.ListenAndServe(":9091", nil)
+	if errors.Is(httperr, http.ErrServerClosed) {
+		fmt.Printf("server closed\n")
+	}
+}
+
+// Handler for root endpoint
+func handlePokeStop(w http.ResponseWriter, r *http.Request) {
+	myPokemon := getPokemon()
+	pageData := IndexPageData{
+		Title: "PokeServer",
+		Name:  myPokemon.Name,
+		Image: myPokemon.Sprites.FrontDefault,
+	}
+	getPokemonDBEntry(myPokemon)
+	updatePokemonVote(myPokemon.ID, rand.IntN(20))
+	tmpl := template.Must(template.ParseFiles("templates/index.html"))
+	tmpl.Execute(w, pageData)
+}
+
+// Handler for root endpoint
+func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
+	allPokemon := getAllPokemonDBEntry()
+	pageData := ShowAllPageData{
+		Title:   "All Pokemon",
+		Pokemon: allPokemon,
+	}
+	tmpl := template.Must(template.ParseFiles("templates/getallpokemon.html"))
+	tmpl.Execute(w, pageData)
+}
+
+func handleVote(w http.ResponseWriter, r *http.Request) {
+	paramters := r.URL.Query()
+	direction := paramters.Get("vote")
+	pokeId, _ := strconv.Atoi(paramters.Get("id"))
+	vote := 0
+	if direction == "down" {
+		vote = -1
+	} else if direction == "up" {
+		vote = 1
+	}
+	updatePokemonVote(pokeId, 1*vote)
 }
 
 // Retrieve specific Pokemon Data for PokeApi
@@ -64,42 +119,34 @@ func getPokemon() Pokemon {
 	return getPokemonByURL(pokeSum.Results[i].URL)
 }
 
-// Handler for root endpoint
-func handlePokeStop(w http.ResponseWriter, r *http.Request) {
-	myPokemon := getPokemon()
-	pageData := PageData{
-		Title: "PokeServer",
-		Name:  myPokemon.Name,
-		Image: myPokemon.Sprites.FrontDefault,
-	}
-	getPokemonVote(myPokemon.Name)
-	updatePokemonVote(myPokemon.Name, rand.IntN(20))
-	tmpl := template.Must(template.ParseFiles("templates/index.html"))
-	tmpl.Execute(w, pageData)
-}
-
 // get the number of votes for a pokemon
-func getPokemonVote(pokename string) int {
-	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE name = $1", pokename)
-	var vote int
-	var name string
-
-	for rows.Next() {
-		err := rows.Scan(&name, &vote)
-		if err != nil {
-			log.Print(err.Error())
-		}
+func getPokemonDBEntry(pokemon Pokemon) int {
+	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE name = $1", pokemon.Name)
+	pokemonDBEntry, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[PokeDBEntry])
+	if err != nil {
+		log.Print(err)
 	}
 
 	if rows.CommandTag().RowsAffected() < 1 {
-		createPokemonVote(pokename)
+		createPokemonVote(pokemon)
 	}
-	return vote
+	return pokemonDBEntry.Vote
+}
+
+func getAllPokemonDBEntry() []PokeDBEntry {
+	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes ORDER BY id ASC")
+	pokemonDBEntries, err := pgx.CollectRows(rows, pgx.RowToStructByName[PokeDBEntry])
+	if err != nil {
+		log.Print(err)
+	}
+
+	return pokemonDBEntries
 }
 
 // Create the entry in the pokevotes tables
-func createPokemonVote(pokename string) bool {
-	_, err := conn.Exec(context.Background(), "insert into pokevotes values($1,$2)", pokename, 0)
+func createPokemonVote(pokemon Pokemon) bool {
+	_, err := conn.Exec(context.Background(), "insert into pokevotes values($1,$2,$3,$4)",
+		pokemon.Name, 0, pokemon.Sprites.FrontDefault, pokemon.ID)
 	if err != nil {
 		log.Print(err.Error())
 		return false
@@ -107,8 +154,8 @@ func createPokemonVote(pokename string) bool {
 	return true
 }
 
-func updatePokemonVote(pokename string, vote int) bool {
-	_, err := conn.Exec(context.Background(), "UPDATE pokevotes SET vote= vote + $1 WHERE name=$2", vote, pokename)
+func updatePokemonVote(id int, vote int) bool {
+	_, err := conn.Exec(context.Background(), "UPDATE pokevotes SET vote= vote + $1 WHERE id=$2", vote, id)
 	if err != nil {
 		log.Print(err.Error())
 		return false
@@ -116,22 +163,20 @@ func updatePokemonVote(pokename string, vote int) bool {
 	return true
 }
 
-var conn *pgx.Conn
+type IndexPageData struct {
+	Title string
+	Name  string
+	Image string
+}
 
-func main() {
+type ShowAllPageData struct {
+	Title   string
+	Pokemon []PokeDBEntry
+}
 
-	var err error
-	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
-		os.Exit(1)
-	}
-
-	http.HandleFunc("/", handlePokeStop)
-
-	fmt.Printf("Started poke app")
-	httperr := http.ListenAndServe(":9091", nil)
-	if errors.Is(httperr, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
-	}
+type PokeDBEntry struct {
+	Id   int
+	Name string
+	Vote int
+	Url  string
 }
