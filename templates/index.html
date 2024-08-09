@@ -8,5 +8,32 @@
 <body>
 	<h1>{{.Name}}</h1>
 	<img src="{{.Image}}">
+	<h2 id="scoretext">Score: ???</h2>
+	<button id="upvote">Upvote</button>
+	<button id="downvote">Downvote</button>
+    <form action="/" method="get">
+        <button type="submit">Next</button>
+    </form>
 </body>
+<script>
+	function updateVote(direction) {
+		const url = '/vote?id={{.Id}}&vote='+direction;
+
+		const xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+
+		xhr.onload = function () {
+			if (xhr.status >= 200 && xhr.status < 300) {
+				console.log('Data received:', JSON.parse(xhr.responseText));
+				document.getElementById("scoretext").textContent="Score: "+xhr.responseText;
+				document.getElementById('upvote').disabled = true;
+				document.getElementById('downvote').disabled = true;
+			}
+		};
+		xhr.send();
+		this.disabled = true;
+	}
+	document.getElementById('upvote').addEventListener('click', updateVote.bind(null, "up"));
+	document.getElementById('downvote').addEventListener('click', updateVote.bind(null, "down"));
+</script>
 </html>

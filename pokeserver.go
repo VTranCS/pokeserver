@@ -45,6 +45,7 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 		Title: "PokeServer",
 		Name:  myPokemon.Name,
 		Image: myPokemon.Sprites.FrontDefault,
+		Id:    strconv.Itoa(myPokemon.ID),
 	}
 	getPokemonDBEntry(myPokemon)
 	updatePokemonVote(myPokemon.ID, rand.IntN(20))
@@ -74,6 +75,8 @@ func handleVote(w http.ResponseWriter, r *http.Request) {
 		vote = 1
 	}
 	updatePokemonVote(pokeId, 1*vote)
+	aPokeDBEntry := getPokemonDBEntryById(pokeId)
+	fmt.Fprint(w, aPokeDBEntry.Vote)
 }
 
 // Retrieve specific Pokemon Data for PokeApi
@@ -133,6 +136,16 @@ func getPokemonDBEntry(pokemon Pokemon) int {
 	return pokemonDBEntry.Vote
 }
 
+func getPokemonDBEntryById(id int) PokeDBEntry {
+	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE id = $1", id)
+	aPokeDBEntry, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[PokeDBEntry])
+	if err != nil {
+		log.Print(err)
+	}
+
+	return aPokeDBEntry
+}
+
 func getAllPokemonDBEntry() []PokeDBEntry {
 	rows, _ := conn.Query(context.Background(), "SELECT * FROM pokevotes ORDER BY id ASC")
 	pokemonDBEntries, err := pgx.CollectRows(rows, pgx.RowToStructByName[PokeDBEntry])
@@ -167,6 +180,7 @@ type IndexPageData struct {
 	Title string
 	Name  string
 	Image string
+	Id    string
 }
 
 type ShowAllPageData struct {
