@@ -14,13 +14,21 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/spf13/viper"
 )
 
 var conn *pgx.Conn
 
 func main() {
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.ReadInConfig()
 
-	var err error
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Error reading config file: %s", err)
+	}
+
 	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
@@ -31,8 +39,9 @@ func main() {
 	http.HandleFunc("/getall", handleShowAllPokemon)
 	http.HandleFunc("/vote", handleVote)
 
-	fmt.Printf("Started poke app")
-	httperr := http.ListenAndServe(":9091", nil)
+	port := fmt.Sprintf(":%s", viper.GetString("server.port"))
+	fmt.Printf("Started poke app on http://localhost%s", port)
+	httperr := http.ListenAndServe(port, nil)
 	if errors.Is(httperr, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
 	}
@@ -40,7 +49,7 @@ func main() {
 
 // Handler for root endpoint
 func handlePokeStop(w http.ResponseWriter, r *http.Request) {
-	myPokemon := getPokemon()
+	myPokemon := getPokemon(viper.GetInt("pokeapi.max"))
 	pageData := IndexPageData{
 		Title: "PokeServer",
 		Name:  myPokemon.Name,
@@ -100,8 +109,8 @@ func getPokemonByURL(url string) Pokemon {
 	return pokemon
 }
 
-func getPokemon() Pokemon {
-	url := "https://pokeapi.co/api/v2/pokemon?limit=151"
+func getPokemon(pokemonRange int) Pokemon {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon?limit=%d", pokemonRange)
 	resp, getErr := http.Get(url)
 	if getErr != nil || resp.StatusCode != 200 {
 		log.Fatal(resp.StatusCode)
