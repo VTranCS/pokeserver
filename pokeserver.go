@@ -20,8 +20,8 @@ import (
 var conn *pgx.Conn
 
 func main() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.SetConfigFile("./.env")
+	viper.SetConfigType("yaml")
 	viper.ReadInConfig()
 
 	err := viper.ReadInConfig()
