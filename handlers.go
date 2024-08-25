@@ -21,7 +21,7 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 	}
 	getPokemonDBEntry(myPokemon)
 	updatePokemonVote(myPokemon.ID, rand.IntN(20))
-	tmpl := template.Must(template.ParseFiles("templates/index.html"))
+	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
 	tmpl.Execute(w, pageData)
 }
 
@@ -32,7 +32,7 @@ func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
 		Title:   "All Pokemon",
 		Pokemon: allPokemon,
 	}
-	tmpl := template.Must(template.ParseFiles("templates/getallpokemon.html"))
+	tmpl := template.Must(template.ParseFiles("static/templates/getallpokemon.html"))
 	tmpl.Execute(w, pageData)
 }
 

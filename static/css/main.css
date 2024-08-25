@@ -1,0 +1,51 @@
+#name {
+    text-align: center;
+}
+
+#votebuttons {
+    margin: auto;
+    display: block;
+    text-align: center;
+}
+
+#votebuttons button {
+    color: white;
+    padding: 10px 24px;
+}
+
+#votebuttons button:not(:last-child) {
+    background-color: rgb(0, 194, 0);
+}
+
+#votebuttons button {
+    background-color: rgb(207, 14, 14);
+}
+
+#votebuttons button:hover {
+    background-image: linear-gradient(rgb(0 0 0/40%) 0 0);
+}
+
+#votebuttons button:disabled {
+    background-color: darkgray;
+}
+
+#scoretext {
+    text-align: center;
+}
+
+html {
+    font-family: 'Courier New', Courier, monospace;
+    background-image: url(https://wallpapercave.com/wp/cqhO8rQ.jpg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-blend-mode: lighten;
+    height: 100%;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 20%;
+}

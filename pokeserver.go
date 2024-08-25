@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/", handlePokeStop)
 	http.HandleFunc("/getall", handleShowAllPokemon)
 	http.HandleFunc("/vote", handleVote)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.port"))
 	fmt.Printf("Started poke app on http://localhost%s", port)
