@@ -2,11 +2,12 @@
 <html>
 
 <head>
-<meta charset="utf-8">
+	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{.Title}}</title>
 	<link rel="stylesheet" href="/static/css/main.css" />
 </head>
+
 <body>
 	<h1 id="name">{{.Name}}</h1>
 	<img src="{{.Image}}">
@@ -15,16 +16,19 @@
 		<button id="upvote">Upvote</button>
 		<button id="downvote">Downvote</button>
 	</div>
-    <!-- <form action="/" method="get">
-        <button type="submit">Next</button>
-    </form>
-	<form action="/getall" method="get">
-        <button type="submit">Results</button>
-    </form> -->
+	<div id="navigation">
+		<form action="/" method="get">
+			<button id = "nextbutton" type="submit" disabled>Next</button>
+		</form>
+		<form action="/getall" method="get">
+			<button id="getallbutton" type="submit" disabled>Results</button>
+		</form>
+	</div>
+
 </body>
 <script>
 	function updateVote(direction) {
-		const url = '/vote?id={{.Id}}&vote='+direction;
+		const url = '/vote?id={{.Id}}&vote=' + direction;
 
 		const xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
@@ -32,9 +36,11 @@
 		xhr.onload = function () {
 			if (xhr.status >= 200 && xhr.status < 300) {
 				console.log('Data received:', JSON.parse(xhr.responseText));
-				document.getElementById("scoretext").textContent="Score: "+xhr.responseText;
+				document.getElementById("scoretext").textContent = "Score: " + xhr.responseText;
 				document.getElementById('upvote').disabled = true;
 				document.getElementById('downvote').disabled = true;
+				document.getElementById('nextbutton').disabled = false;
+				document.getElementById('getallbutton').disabled = false;
 			}
 		};
 		xhr.send();
@@ -43,4 +49,5 @@
 	document.getElementById('upvote').addEventListener('click', updateVote.bind(null, "up"));
 	document.getElementById('downvote').addEventListener('click', updateVote.bind(null, "down"));
 </script>
+
 </html>

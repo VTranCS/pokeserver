@@ -4,14 +4,37 @@
 <meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{.Title}}</title>
+    <link rel="stylesheet" href="http://cdn.datatables.net/2.1.4/css/dataTables.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.1/css/bulma.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.4/css/dataTables.bulma.css" />
 </head>
 <body>
-    {{range .Pokemon}}
-	<h1>{{.Name}}</h1>
-    <h2>ID: {{.Id}}</h2>
-    <h2>Votes: {{.Vote}}</h2>
-	<img src="{{.Url}}">
-    <hr class="solid">
-    {{end}}
+    <table id="pokemon" class="display compact hover stripe">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>ID</td>
+                <td>Image</td>
+                <td>Votes</td>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Pokemon}}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.Id}}</td>
+                <td><img src="{{.Url}}"></td>
+                <td>{{.Vote}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
 </body>
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="http://cdn.datatables.net/2.1.4/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.4/js/dataTables.bulma.js"></script>
+<script>
+    new DataTable("#pokemon");
+</script>
 </html>
