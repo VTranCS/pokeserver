@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/spf13/viper"
 )
 
-var conn *pgx.Conn
+var repo *Repository
 
 func main() {
 	viper.SetConfigFile("./.env")
@@ -24,12 +22,12 @@ func main() {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
-	conn, err = pgx.Connect(context.Background(), viper.GetString("database.url"))
+	repo, err = NewRepository(context.Background(), viper.GetString("database.url"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Error connecting to database: %s", err)
 	}
 
+	repo.createPokeVotesTable()
 	http.HandleFunc("/getall", handleShowAllPokemon)
 	http.HandleFunc("/vote", handleVote)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

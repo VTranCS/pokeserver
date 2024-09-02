@@ -19,15 +19,16 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 		Image: myPokemon.Sprites.FrontDefault,
 		Id:    strconv.Itoa(myPokemon.ID),
 	}
-	getPokemonDBEntry(myPokemon)
-	updatePokemonVote(myPokemon.ID, rand.IntN(20))
+
+	repo.getPokemonDBEntry(myPokemon)
+	repo.updatePokemonVote(myPokemon.ID, rand.IntN(20))
 	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
 	tmpl.Execute(w, pageData)
 }
 
 // Handler for root endpoint
 func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
-	allPokemon := getAllPokemonDBEntry()
+	allPokemon := repo.getAllPokemonDBEntry()
 	pageData := ShowAllPageData{
 		Title:   "All Pokemon",
 		Pokemon: allPokemon,
@@ -46,8 +47,8 @@ func handleVote(w http.ResponseWriter, r *http.Request) {
 	} else if direction == "up" {
 		vote = 1
 	}
-	updatePokemonVote(pokeId, 1*vote)
-	aPokeDBEntry := getPokemonDBEntryById(pokeId)
+	repo.updatePokemonVote(pokeId, 1*vote)
+	aPokeDBEntry := repo.getPokemonDBEntryById(pokeId)
 	fmt.Fprint(w, aPokeDBEntry.Vote)
 }
 
