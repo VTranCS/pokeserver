@@ -25,7 +25,7 @@ func NewRepository(ctx context.Context, connStr string) (*Repository, error) {
 }
 
 // get the number of votes for a pokemon
-func (r Repository) getPokemonDBEntry(pokemon Pokemon) int {
+func (r Repository) getPokemonDBEntry(pokemon Pokemon) (int, error) {
 	rows, _ := r.conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE name = $1", pokemon.Name)
 	pokemonDBEntry, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[PokeDBEntry])
 	if err != nil {
@@ -35,56 +35,65 @@ func (r Repository) getPokemonDBEntry(pokemon Pokemon) int {
 	if rows.CommandTag().RowsAffected() < 1 {
 		r.createPokemonVote(pokemon)
 	}
-	return pokemonDBEntry.Vote
+	return pokemonDBEntry.Vote, err
 }
 
-func (r Repository) getPokemonDBEntryById(id int) PokeDBEntry {
+func (r Repository) getPokemonDBEntryById(id int) (PokeDBEntry, error) {
 	rows, _ := r.conn.Query(context.Background(), "SELECT * FROM pokevotes WHERE id = $1", id)
 	aPokeDBEntry, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[PokeDBEntry])
 	if err != nil {
 		log.Print(err)
 	}
 
-	return aPokeDBEntry
+	return aPokeDBEntry, err
 }
 
-func (r Repository) getAllPokemonDBEntry() []PokeDBEntry {
+func (r Repository) getAllPokemonDBEntry() ([]PokeDBEntry, error) {
 	rows, _ := r.conn.Query(context.Background(), "SELECT * FROM pokevotes ORDER BY id ASC")
 	pokemonDBEntries, err := pgx.CollectRows(rows, pgx.RowToStructByName[PokeDBEntry])
 	if err != nil {
 		log.Print(err)
 	}
 
-	return pokemonDBEntries
+	return pokemonDBEntries, nil
 }
 
 // Create the entry in the pokevotes tables
-func (r Repository) createPokemonVote(pokemon Pokemon) bool {
+func (r Repository) createPokemonVote(pokemon Pokemon) (bool, error) {
 	_, err := r.conn.Exec(context.Background(), "insert into pokevotes values($1,$2,$3,$4)",
 		pokemon.Name, 0, pokemon.Sprites.FrontDefault, pokemon.ID)
 	if err != nil {
 		log.Print(err.Error())
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
-func (r Repository) createPokeVotesTable() bool {
+func (r Repository) createPokeVotesTable() (bool, error) {
 	_, err := r.conn.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS pokevotes ( NAME VARCHAR(100),"+
 		"vote INT, Url VARCHAR(100), Id INT);")
 	if err != nil {
 		log.Print(err.Error())
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
-func (r Repository) updatePokemonVote(id int, vote int) bool {
+func (r Repository) updatePokemonVote(id int, vote int) (bool, error) {
 	_, err := r.conn.Exec(context.Background(), "UPDATE pokevotes SET vote= vote + $1 WHERE id=$2",
 		vote, id)
 	if err != nil {
 		log.Print(err.Error())
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
+}
+
+func (r Repository) resetPokeVotes() (bool, error) {
+	_, err := r.conn.Exec(context.Background(), "TRUNCATE pokevotes")
+	if err != nil {
+		log.Print(err.Error())
+		return false, err
+	}
+	return true, nil
 }

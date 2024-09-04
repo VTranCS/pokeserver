@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"net/http"
 	"strconv"
@@ -28,7 +29,11 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 
 // Handler for root endpoint
 func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
-	allPokemon := repo.getAllPokemonDBEntry()
+	allPokemon, err := repo.getAllPokemonDBEntry()
+	if err != nil {
+		log.Print(err.Error())
+
+	}
 	pageData := ShowAllPageData{
 		Title:   "All Pokemon",
 		Pokemon: allPokemon,
@@ -48,8 +53,12 @@ func handleVote(w http.ResponseWriter, r *http.Request) {
 		vote = 1
 	}
 	repo.updatePokemonVote(pokeId, 1*vote)
-	aPokeDBEntry := repo.getPokemonDBEntryById(pokeId)
+	aPokeDBEntry, err := repo.getPokemonDBEntryById(pokeId)
+	if err != nil {
+		log.Print(err.Error())
+	}
 	fmt.Fprint(w, aPokeDBEntry.Vote)
+
 }
 
 type IndexPageData struct {
