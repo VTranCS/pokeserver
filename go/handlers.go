@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -10,6 +11,10 @@ import (
 
 	"github.com/spf13/viper"
 )
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
 
 // Handler for root endpoint
 func handlePokeStop(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +30,13 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 	repo.updatePokemonVote(myPokemon.ID, rand.IntN(20))
 	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
 	tmpl.Execute(w, pageData)
+}
+
+// Handler for root endpoint
+func handleGetPokemon(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	myPokemon := getPokemon(viper.GetInt("pokeapi.max"))
+	json.NewEncoder(w).Encode(myPokemon)
 }
 
 // Handler for root endpoint

@@ -29,6 +29,7 @@ func main() {
 
 	repo.createPokeVotesTable()
 	http.HandleFunc("/getall", handleShowAllPokemon)
+	http.HandleFunc("/getpokemon", handleGetPokemon)
 	http.HandleFunc("/vote", handleVote)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handlePokeStop)
