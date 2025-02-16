@@ -54,6 +54,35 @@ func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, pageData)
 }
 
+type PokeDBList struct {
+	Data []PokeDBEntry
+}
+
+func handleGetAllPokemon(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	allPokemon, err := repo.getAllPokemonDBEntry()
+	if err != nil {
+		log.Print(err.Error())
+
+	}
+
+	response := map[string]interface{}{
+		"pokemon": allPokemon,
+	}
+
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		log.Println("Error encoding JSON:", err)
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+
+}
+
 func handleVote(w http.ResponseWriter, r *http.Request) {
 	paramters := r.URL.Query()
 	direction := paramters.Get("vote")
