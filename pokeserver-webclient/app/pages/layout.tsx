@@ -28,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </a>
                     </li>
                     <li className="logo">
-                        <a href="/pages/vote" className="nav-link">
+                        <a href="/pages/voter" className="nav-link">
                             <span className="link-text logo-text">Vote</span>
 
                             <svg

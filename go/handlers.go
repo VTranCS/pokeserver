@@ -36,6 +36,8 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 func handleGetPokemon(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	myPokemon := getPokemon(viper.GetInt("pokeapi.max"))
+	repo.getPokemonDBEntry(myPokemon)
+	repo.updatePokemonVote(myPokemon.ID, rand.IntN(20))
 	json.NewEncoder(w).Encode(myPokemon)
 }
 
@@ -84,6 +86,7 @@ func handleGetAllPokemon(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleVote(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	paramters := r.URL.Query()
 	direction := paramters.Get("vote")
 	pokeId, _ := strconv.Atoi(paramters.Get("id"))

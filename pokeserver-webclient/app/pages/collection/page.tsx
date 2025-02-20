@@ -8,10 +8,10 @@ import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,  getKey
 export default function Home() {
 
   interface Pokemon {
-    Name: any;
-    Id: any;
-    Vote: any;
-    Url: any;
+    Name: string;
+    Id: number;
+    Vote: number;
+    Url: string;
   }
 
   let [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
@@ -51,18 +51,36 @@ export default function Home() {
     },
     {
       key: "Url",
-      label: "URL",
+      label: "SPRITE",
     },
   ];
+
+  const renderCell = (item: Pokemon, columnKey: any) => {
+    if (columnKey === "Url") {
+      return <Image src={item.Url} alt={item.Name} width={50} height={50} />;
+    }
+    else if (columnKey === "Name") {
+      return <a
+        href={`https://www.pokemon.com/us/pokedex/${item.Name.toLowerCase()}`}
+        className="text-blue-500 hover:underline"
+        rel="noopener noreferrer"
+        target="_blank"
+      >{item.Name}</a>
+    }
+    else {
+      return <p>{item[columnKey as keyof Pokemon]}</p>
+    }
+    return getKeyValue(item, columnKey);
+  };
   return (
-    <Table aria-label="Example table with dynamic content">
+    <Table isStriped={true} isHeaderSticky aria-label="Example table with dynamic content">
       <TableHeader columns={columns}>
-        {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+        {(column) => <TableColumn className="text-left" key={column.key}>{column.label}</TableColumn>}
       </TableHeader>
       <TableBody items={pokemonList}>
-        {(item) => (
+      {(item) => (
           <TableRow key={item.Id}>
-            {(columnKey) => <TableCell>{getKeyValue(item, columnKey)}</TableCell>}
+            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
           </TableRow>
         )}
       </TableBody>
