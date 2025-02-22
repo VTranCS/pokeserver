@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("Error connecting to database: %s", err)
 	}
 
-	repo.createPokeVotesTable()
+	repo.createPokeVotesTable(context.Background())
 	http.HandleFunc("/getall", handleGetAllPokemon)
 	http.HandleFunc("/getpokemon", handleGetPokemon)
 	http.HandleFunc("/vote", handleVote)

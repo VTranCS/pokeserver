@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ func enableCors(w *http.ResponseWriter) {
 
 // Handler for root endpoint
 func handlePokeStop(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	myPokemon := getPokemon(viper.GetInt("pokeapi.max"))
 	pageData := IndexPageData{
 		Title: "PokeServer",
@@ -26,24 +28,26 @@ func handlePokeStop(w http.ResponseWriter, r *http.Request) {
 		Id:    strconv.Itoa(myPokemon.ID),
 	}
 
-	repo.getPokemonDBEntry(myPokemon)
-	repo.updatePokemonVote(myPokemon.ID, rand.IntN(20))
+	repo.getPokemonDBEntry(ctx, myPokemon)
+	repo.updatePokemonVote(ctx, myPokemon.ID, rand.IntN(20))
 	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
 	tmpl.Execute(w, pageData)
 }
 
 // Handler for root endpoint
 func handleGetPokemon(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	enableCors(&w)
 	myPokemon := getPokemon(viper.GetInt("pokeapi.max"))
-	repo.getPokemonDBEntry(myPokemon)
-	repo.updatePokemonVote(myPokemon.ID, rand.IntN(20))
+	repo.getPokemonDBEntry(ctx, myPokemon)
+	repo.updatePokemonVote(ctx, myPokemon.ID, rand.IntN(20))
 	json.NewEncoder(w).Encode(myPokemon)
 }
 
 // Handler for root endpoint
 func handleShowAllPokemon(w http.ResponseWriter, r *http.Request) {
-	allPokemon, err := repo.getAllPokemonDBEntry()
+	ctx := context.Background()
+	allPokemon, err := repo.getAllPokemonDBEntry(ctx)
 	if err != nil {
 		log.Print(err.Error())
 
@@ -61,8 +65,9 @@ type PokeDBList struct {
 }
 
 func handleGetAllPokemon(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	enableCors(&w)
-	allPokemon, err := repo.getAllPokemonDBEntry()
+	allPokemon, err := repo.getAllPokemonDBEntry(ctx)
 	if err != nil {
 		log.Print(err.Error())
 
@@ -86,6 +91,7 @@ func handleGetAllPokemon(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleVote(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	enableCors(&w)
 	paramters := r.URL.Query()
 	direction := paramters.Get("vote")
@@ -96,8 +102,8 @@ func handleVote(w http.ResponseWriter, r *http.Request) {
 	} else if direction == "up" {
 		vote = 1
 	}
-	repo.updatePokemonVote(pokeId, 1*vote)
-	aPokeDBEntry, err := repo.getPokemonDBEntryById(pokeId)
+	repo.updatePokemonVote(ctx, pokeId, 1*vote)
+	aPokeDBEntry, err := repo.getPokemonDBEntryById(ctx, pokeId)
 	if err != nil {
 		log.Print(err.Error())
 	}
