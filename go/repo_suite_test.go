@@ -39,7 +39,7 @@ func (suite *PokemonRepoTestSuite) TearDownSuite() {
 
 // Tear down your suite after each test
 func (suite *PokemonRepoTestSuite) TearDownTest() {
-	_, err := suite.repository.resetPokeVotes()
+	_, err := suite.repository.resetPokeVotes(suite.ctx)
 	if err != nil {
 		log.Fatalf("Unable to reset sql table pokevotes: %s", err)
 	}
@@ -47,7 +47,7 @@ func (suite *PokemonRepoTestSuite) TearDownTest() {
 func (suite *PokemonRepoTestSuite) TestCreatePokemon() {
 	t := suite.T()
 
-	pokemonCreated, err := suite.repository.createPokemonVote(Pokemon{
+	pokemonCreated, err := suite.repository.createPokemonVote(suite.ctx, Pokemon{
 		Name: "Chari",
 		Sprites: struct {
 			BackDefault  string `json:"back_default"`
@@ -63,7 +63,7 @@ func (suite *PokemonRepoTestSuite) TestCreatePokemon() {
 
 func (suite *PokemonRepoTestSuite) TestGetAllPokemon() {
 	t := suite.T()
-	suite.repository.createPokemonVote(Pokemon{
+	suite.repository.createPokemonVote(suite.ctx, Pokemon{
 		Name: "Chari",
 		Sprites: struct {
 			BackDefault  string `json:"back_default"`
@@ -73,14 +73,14 @@ func (suite *PokemonRepoTestSuite) TestGetAllPokemon() {
 		},
 		ID: 121,
 	})
-	allPokemon, err := suite.repository.getAllPokemonDBEntry()
+	allPokemon, err := suite.repository.getAllPokemonDBEntry(suite.ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(allPokemon))
 }
 
 func (suite *PokemonRepoTestSuite) TestGetPokemonById() {
 	t := suite.T()
-	_, err := suite.repository.createPokemonVote(Pokemon{
+	_, err := suite.repository.createPokemonVote(suite.ctx, Pokemon{
 		Name: "Chari",
 		Sprites: struct {
 			BackDefault  string `json:"back_default"`
@@ -91,7 +91,7 @@ func (suite *PokemonRepoTestSuite) TestGetPokemonById() {
 		ID: 121,
 	})
 	assert.NoError(t, err)
-	pokemon, err := suite.repository.getPokemonDBEntryById(121)
+	pokemon, err := suite.repository.getPokemonDBEntryById(suite.ctx, 121)
 	testPokemon := PokeDBEntry{
 		Id:   121,
 		Name: "Chari",
@@ -105,7 +105,7 @@ func (suite *PokemonRepoTestSuite) TestGetPokemonById() {
 
 func (suite *PokemonRepoTestSuite) TestGetNonExistantPokemon() {
 	t := suite.T()
-	pokemon, err := suite.repository.getPokemonDBEntryById(-1)
+	pokemon, err := suite.repository.getPokemonDBEntryById(suite.ctx, -1)
 	assert.Error(t, err)
 	defaultPokeDbEntry := PokeDBEntry{
 		Id:   0,
