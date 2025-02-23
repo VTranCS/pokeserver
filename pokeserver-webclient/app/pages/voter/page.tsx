@@ -12,14 +12,19 @@ export default function Home() {
             front_default: string;
         };
     }
-
+    const defaultVoteText = "???";
     let [pokemon, setPokemon] = useState<Pokemon | null>(null)
+    let [score, setScore] = useState(defaultVoteText);
+    let [disableInput, setDisableInput] = useState(false);
     const [fetchTrigger, setFetchTrigger] = useState(true); // State to trigger useEffect
-
+ 
     async function votePokemon(pokemonId: number, action: "up" | "down"): Promise<number> {
         const url = `http://localhost:9091/vote?id=${pokemonId}&vote=${action}`;
         const response = await fetch(url);
         console.log("RESPONSE", response);
+        const data = await response.json();
+        setScore(data.Vote);
+        setDisableInput(true);
         return 0;
     }
     useEffect(() => {
@@ -33,6 +38,8 @@ export default function Home() {
                     setPokemon(data)
                 })
             setFetchTrigger(false); // Reset trigger
+            setDisableInput(false);
+            setScore(defaultVoteText);
         };
 
         fetchRandomPokemon();
@@ -55,19 +62,21 @@ export default function Home() {
                     <span className="text-2xl">{pokemon?.name.toUpperCase()}</span>
                 </div>
                 <div className="flex justify-center items-center w-full ">
-                    <span className="text-2xl">Score:</span>
+                    <span className="text-2xl">Score: {score} </span>
                 </div>
                 <div
                     className="flex gap-4 items-center flex-col sm:flex-row">
                     <div className="flex gap-4 items-center flex-col sm:flex-row">
                         <button
-                            className="bg-green-500 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+                            disabled={disableInput}
+                            className={`${disableInput ? 'bg-gray-500' : 'bg-green-500'} rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44`}
                             onClick={() => { if (pokemon?.id !== undefined) votePokemon(pokemon.id, "up"); }}
                         >
                             Upvote
                         </button>
                         <button
-                            className="bg-red-500 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+                            disabled={disableInput}
+                            className={`${disableInput ? 'bg-gray-500' : 'bg-red-500'} rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44`}
                             onClick={() => { if (pokemon?.id !== undefined) votePokemon(pokemon.id, "down"); }}
                         >
                             Downvote

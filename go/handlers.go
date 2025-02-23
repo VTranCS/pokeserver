@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand/v2"
 	"net/http"
@@ -107,7 +106,7 @@ func handleVote(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 	}
-	fmt.Fprint(w, aPokeDBEntry.Vote)
+	json.NewEncoder(w).Encode(aPokeDBEntry)
 
 }
 
