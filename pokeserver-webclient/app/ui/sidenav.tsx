@@ -1,4 +1,3 @@
-import Link from 'next/link';
 export default function SideNav() {
     return (
         <div className="invisible md:visible bg-gray-700 w-1/2 rounded-lg">

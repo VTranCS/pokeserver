@@ -1,9 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import React, { useState, useEffect, useRef } from "react";
-import { revalidatePath } from 'next/cache';
-import Link from "next/link";
+import React, { useState, useEffect} from "react";
 import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,  getKeyValue,} from "@heroui/table";
 export default function Home() {
 
@@ -14,12 +12,12 @@ export default function Home() {
     Url: string;
   }
 
-  let [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
   const [fetchTrigger, setFetchTrigger] = useState(true); // State to trigger useEffect
 
   useEffect(() => {
 
-    const fetchRandomPokemon = async () => {
+    const fetchAllPokemon = async () => {
       console.log('url', process.env);
       fetch((process.env.NEXT_PUBLIC_POKEMON_BASE_URL || 'localhost:3000')
         + (process.env.NEXT_PUBLIC_SUFFIX_GET_POKEMON_VOTES || '/getall'))
@@ -31,10 +29,8 @@ export default function Home() {
       setFetchTrigger(false); // Reset trigger
     };
 
-    fetchRandomPokemon();
-  }, [fetchTrigger]); // Only runs when fetchTrigger changes
-
-  const [textInput, setTextInput] = useState('');
+    fetchAllPokemon();
+  }, [fetchTrigger]); 
 
   const columns = [
     {
@@ -61,7 +57,7 @@ export default function Home() {
     }
     else if (columnKey === "Name") {
       return <a
-        href={`https://www.pokemon.com/us/pokedex/${item.Name.toLowerCase()}`}
+        href={`https://pokemondb.net/pokedex/${item.Id}`}
         className="text-blue-500 hover:underline"
         rel="noopener noreferrer"
         target="_blank"
