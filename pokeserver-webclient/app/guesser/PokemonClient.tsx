@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import { getRandomPokemon, type Pokemon } from "./actions/getPokemon";
 
 export default function PokemonClient({ initialPokemon }: { initialPokemon: Pokemon }) {
@@ -13,34 +13,9 @@ export default function PokemonClient({ initialPokemon }: { initialPokemon: Poke
   const [score, setScore] = useState(0);
   const [textInput, setTextInput] = useState('');
   const [isPending, startTransition] = useTransition();
-
-  function handleKeyDown(e: { key: string }) {
-    if (e.key === 'Enter') {
-      if (textInput.trim().toLowerCase() === pokemon.name.toLowerCase()) {
-        setDisableInput(true);
-        setImageVisible(true);
-        setScore(score + 1);
-      } else {
-        const newFailed = failedCount + 1;
-        setFailedCount(newFailed);
-        if (newFailed >= 3) {
-          setTextInput(pokemon.name);
-          setDisableInput(true);
-          setImageVisible(true);
-          setFailed(false);
-          setScore(score - 1);
-        } else {
-          setTextInput('');
-          setFailed(true);
-        }
-      }
-    } else if (failed) {
-      setFailed(false);
-      setTextInput('');
-    }
-  }
-
-  function getAnotherPokemon() {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  const getAnotherPokemon = React.useCallback(() => {
     startTransition(async () => {
       const newPokemon = await getRandomPokemon();
       setPokemon(newPokemon);
@@ -50,19 +25,74 @@ export default function PokemonClient({ initialPokemon }: { initialPokemon: Poke
       setFailedCount(0);
       setTextInput('');
     });
+  }, []);
+
+  useEffect(() => {
+    const activeTag = document.activeElement?.tagName;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isLetter = /^[a-zA-Z]$/.test(e.key);
+      if (isLetter && activeTag !== "INPUT") {
+        inputRef.current?.focus();
+      }
+      
+      if (e.key === "Enter" && document.activeElement?.tagName !== "INPUT") {
+        if (!imageVisible) {
+          setScore(score - 1);
+        }
+
+        getAnotherPokemon();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  });
+  
+  function handleKeyDown(e: { key: string }) {
+    if (e.key === 'Enter') {
+      // Correct answer
+      if (textInput.trim().toLowerCase() === pokemon.name.toLowerCase()) {
+        setDisableInput(true);
+        setImageVisible(true);
+        setScore(score + 1);
+      } else {
+        // Incorrect answer
+        const newFailed = failedCount + 1;
+        
+        setFailedCount(newFailed);
+        // Failed too many times
+        if (newFailed >= 3) {
+          setTextInput(pokemon.name);
+          setDisableInput(true);
+          setImageVisible(true);
+          setFailed(false);
+          setScore(score - 1);
+        // Reset for next guess
+        } else {
+          setTextInput('');
+          setFailed(true);
+        }
+      }
+    }
+    
+    else if (failed) {
+      setFailed(false);
+      setTextInput('');
+    }
   }
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <Image
-          src={pokemon?.sprites.front_default}
+          src={pokemon?.sprites.other["official-artwork"].front_default}
           alt="Pokemon"
-          width={180}
-          height={180}
-          className={`${imageVisible ? "" : "opacity-50 blur-md"}`}
+          width={360}
+          height={360}
+          className={`${imageVisible ? "" : "filter brightness-0 invert"}`}
         />
         <textarea
+          ref={inputRef}
           disabled={disableInput}
           value={textInput}
           rows={1}
