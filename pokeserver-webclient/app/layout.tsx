@@ -1,4 +1,3 @@
-import SideNav from "./ui/sidenav";
 import type { Metadata } from "next";
 import "./layout.css";
 export const experimental_ppr = true;
@@ -25,10 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden h-screen w-screen`}
       >
          <div>
-            <nav className="navbar z-50">
+            <nav className="navbar z-50 overflow-hidden">
                 <ul className="navbar-nav">
                     <li className="logo">
                         <a href="/guesser" className="nav-link">

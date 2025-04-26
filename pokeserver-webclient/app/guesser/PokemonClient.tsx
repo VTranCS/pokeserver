@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { getRandomPokemon, type Pokemon } from "./actions/getPokemon";
+import { getRandomPokemon } from "@/app/actions/getPokemon";
+import { Pokemon } from "@/app/types/Pokemon";
 
 export default function PokemonClient({ initialPokemon }: { initialPokemon: Pokemon }) {
   const [pokemon, setPokemon] = useState(initialPokemon);
@@ -98,7 +99,7 @@ export default function PokemonClient({ initialPokemon }: { initialPokemon: Poke
           rows={1}
           onChange={(e) => setTextInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className={`rounded-lg focus:outline-none focus:ring-0 resize-none ${failed ? "bg-red-700" : "bg-gray-700"} text-white text-center text-base`}
+          className={`overflow-hidden rounded-lg focus:outline-none focus:ring-0 resize-none ${failed ? "bg-red-700" : "bg-gray-700"} text-white text-center text-base`}
         />
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           <button
