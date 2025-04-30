@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { getRandomPokemon } from "@/app/actions/getPokemon";
-import { Pokemon } from "@/app/types/Pokemon";
+import { FetchedPokemonDBEntry } from "../types/PokemonDBEntry";
+import { getRandomPokemon } from "../actions/getPokemon";
 
-export default function PokemonClient({ initialPokemon }: { initialPokemon: Pokemon }) {
+export default function PokemonClient({ initialPokemon, generation }: { initialPokemon: FetchedPokemonDBEntry, generation: number }) {
   const [pokemon, setPokemon] = useState(initialPokemon);
   const [imageVisible, setImageVisible] = useState(false);
   const [disableInput, setDisableInput] = useState(false);
@@ -18,7 +18,7 @@ export default function PokemonClient({ initialPokemon }: { initialPokemon: Poke
   
   const getAnotherPokemon = React.useCallback(() => {
     startTransition(async () => {
-      const newPokemon = await getRandomPokemon();
+      const newPokemon = await getRandomPokemon(generation);
       setPokemon(newPokemon);
       setDisableInput(false);
       setImageVisible(false);
@@ -86,7 +86,7 @@ export default function PokemonClient({ initialPokemon }: { initialPokemon: Poke
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <Image
-          src={pokemon?.sprites.other["official-artwork"].front_default}
+          src={pokemon?.image}
           alt="Pokemon"
           width={360}
           height={360}

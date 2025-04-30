@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import React, { startTransition, useState } from "react";
-import { Pokemon } from "@/app/types/Pokemon";
 import { getRandomPokemon } from "../actions/getPokemon";
 import { votePokemon } from "../actions/votePokemon";
-export default function PokemonVoteDisplay({ initialPokemon }: { initialPokemon: Pokemon }) {
+import { FetchedPokemonDBEntry} from "../types/PokemonDBEntry";
+export default function PokemonVoteDisplay({ initialPokemon, generation }: { initialPokemon: FetchedPokemonDBEntry, generation: number }) {
 
     const defaultVoteText = "???";
-    const [pokemon, setPokemon] = useState<Pokemon | null>(initialPokemon);
+    const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>(initialPokemon);
     const [score, setScore] = useState(defaultVoteText);
     const [disableInput, setDisableInput] = useState(false);
  
@@ -21,18 +21,18 @@ export default function PokemonVoteDisplay({ initialPokemon }: { initialPokemon:
 
       const getAnotherPokemon = React.useCallback(() => {
         startTransition(async () => {
-          const newPokemon = await getRandomPokemon();
+          const newPokemon = await getRandomPokemon(generation);
           setPokemon(newPokemon);
           setDisableInput(false);
         });
-      }, []);
+      }, [generation]);
 
     return (
         <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
             <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
                 <div className="flex justify-center items-center w-full">
                     <Image
-                        src={pokemon ? pokemon?.sprites.other["official-artwork"].front_default : '/nextjs.svg'}
+                        src={pokemon ? pokemon?.image : '/nextjs.svg'}
                         alt="Next.js logo"
                         width={360}
                         height={100}

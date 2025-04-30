@@ -1,14 +1,12 @@
 "use server";
-import { Pokemon } from "@/app/types/Pokemon";
-import { PokemonDBEntry } from "@/app/types/PokemonDBEntry";
-export async function getRandomPokemon(): Promise<Pokemon> {
-  const res = await fetch(`${process.env.POKEMON_BASE_URL}/${process.env.SUFFIX_GET_POKEMON}`, {
-    cache: 'no-store',
-  });
+import { FetchedPokemonDBEntry, PokemonDBEntry } from "@/app/types/PokemonDBEntry";
+import { db } from '@vercel/postgres';
+const client = await db.connect();
 
-  if (!res.ok) throw new Error('Failed to fetch Pokémon');
+export async function getRandomPokemon(generation: number ): Promise<FetchedPokemonDBEntry> {
+  const res = await client.sql`SELECT * FROM pokemon WHERE generation = ${generation} ORDER BY RANDOM() LIMIT 1`;
 
-  return res.json();
+  return res.rows[0] as FetchedPokemonDBEntry;
 }
 
 

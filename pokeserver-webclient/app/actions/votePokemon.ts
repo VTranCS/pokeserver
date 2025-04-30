@@ -1,8 +1,11 @@
 "use server"
+import { db } from '@vercel/postgres';
+const client = await db.connect();
 
 export async function votePokemon(pokemonId: number, action: "up" | "down"): Promise<number> {
-    const url = `${process.env.POKEMON_BASE_URL}/${process.env.SUFFIX_VOTE_POKEMON}?id=${pokemonId}&vote=${action}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.Vote;
+    const res = await client.sql`UPDATE pokemon SET vote = vote + ${action === "up" ? 1 : -1} WHERE id = ${pokemonId} RETURNING vote`;
+    if (res.rows.length === 0) {
+        throw new Error('Failed to update vote');
+    }
+    return res.rows[0].vote;
 }
