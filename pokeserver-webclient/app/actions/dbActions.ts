@@ -1,8 +1,9 @@
 import { db } from '@vercel/postgres';
 import { FetchedPokemon } from '../types/PokemonDBEntry';
-const client = await db.connect();
+
 
 export async function seedPokemon(generation: number = 1) {
+    const client = await db.connect();
     await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
     await client.sql`
       CREATE TABLE IF NOT EXISTS pokemon (
@@ -41,7 +42,7 @@ export async function seedPokemon(generation: number = 1) {
 
         return `(${id}, '${safeName}', ${generation}, '${safeSprite}', 0)`;
     });
-    
+
     if (values.length > 0) {
         const insertQuery = `
             INSERT INTO pokemon (id, name, generation, image, vote)

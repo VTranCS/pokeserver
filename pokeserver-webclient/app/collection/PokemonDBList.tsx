@@ -1,47 +1,46 @@
 'use client';
 
 import Image from "next/image";
-import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,  getKeyValue,} from "@heroui/table";
-import { PokemonDBEntry } from "@/app/types/PokemonDBEntry";
-export default function PokemonDBList({ pokemonList }: { pokemonList: PokemonDBEntry[] }) {
+import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@heroui/table";
+import { FetchedPokemonDBEntry } from "@/app/types/PokemonDBEntry";
+export default function PokemonDBList({ pokemonList }: { pokemonList: FetchedPokemonDBEntry[] }) {
 
 
   console.log("PokemonDBList", pokemonList);
   const columns = [
     {
-      key: "Name",
-      label: "NAME",
+      key: "name",
+      label: "POKEMON",
     },
     {
-      key: "Id",
+      key: "id",
       label: "ID",
     },
     {
-      key: "Vote",
+      key: "vote",
       label: "VOTE",
     },
     {
       key: "Url",
-      label: "SPRITE",
+      label: "",
     },
   ];
 
-  const renderCell = (item: PokemonDBEntry, columnKey: string) => {
+  const renderCell = (item: FetchedPokemonDBEntry, columnKey: string) => {
     if (columnKey === "Url") {
-      return <Image src={item.Url} alt={item.Name} width={50} height={50} />;
+      return ;
     }
-    else if (columnKey === "Name") {
+    if (columnKey === "name") {
       return <a
-        href={`https://pokemondb.net/pokedex/${item.Id}`}
+        href={`https://pokemondb.net/pokedex/${item.id}`}
         className="text-blue-500 hover:underline"
         rel="noopener noreferrer"
         target="_blank"
-      >{item.Name}</a>
+      ><Image src={item.image} alt={item.name} width={100} height={100} />{item.name}</a>
     }
     else {
-      return <p>{item[columnKey as keyof PokemonDBEntry]}</p>
+      return <p>{item[columnKey as keyof FetchedPokemonDBEntry]}</p>
     }
-    return getKeyValue(item, columnKey);
   };
 
   if (!Array.isArray(pokemonList)) {
@@ -56,7 +55,7 @@ export default function PokemonDBList({ pokemonList }: { pokemonList: PokemonDBE
       </TableHeader>
       <TableBody items={pokemonList}>
       {(item) => (
-          <TableRow key={item.Id}>
+          <TableRow key={item.id}>
             {(columnKey) => <TableCell>{renderCell(item, columnKey as string)}</TableCell>}
           </TableRow>
         )}
