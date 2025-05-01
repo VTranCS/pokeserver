@@ -5,10 +5,10 @@ import React, { startTransition, useState } from "react";
 import { getRandomPokemon } from "../actions/getPokemon";
 import { votePokemon } from "../actions/votePokemon";
 import { FetchedPokemonDBEntry} from "../types/PokemonDBEntry";
-export default function PokemonVoteDisplay({ initialPokemon, generation }: { initialPokemon: FetchedPokemonDBEntry, generation: number }) {
+export default function PokemonVoteDisplay({}) {
 
     const defaultVoteText = "???";
-    const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>(initialPokemon);
+    const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>();
     const [score, setScore] = useState(defaultVoteText);
     const [disableInput, setDisableInput] = useState(false);
  
@@ -21,11 +21,15 @@ export default function PokemonVoteDisplay({ initialPokemon, generation }: { ini
 
       const getAnotherPokemon = React.useCallback(() => {
         startTransition(async () => {
-          const newPokemon = await getRandomPokemon(generation);
+          const newPokemon = await getRandomPokemon();
           setPokemon(newPokemon);
           setDisableInput(false);
         });
-      }, [generation]);
+      }, []);
+
+    React.useEffect(() => {
+        getAnotherPokemon();
+    }, [getAnotherPokemon]);
 
     return (
         <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">

@@ -2,9 +2,9 @@ import { db } from '@vercel/postgres';
 import { FetchedPokemon } from '../types/PokemonDBEntry';
 
 
-export async function seedPokemon(generation: number = 1) {
+export async function seedPokemon() {
+    const generation = process.env.POKEMON_GENERATION ? parseInt(process.env.POKEMON_GENERATION, 10) : 1;
     const client = await db.connect();
-    await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
     await client.sql`
       CREATE TABLE IF NOT EXISTS pokemon (
         id INT PRIMARY KEY,
