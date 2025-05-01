@@ -3,6 +3,7 @@ import "./layout.css";
 export const experimental_ppr = true;
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -94,6 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </ul>
             </nav>
             <main className="">{children}</main></div>
+            <Analytics />
       </body>
       </html>
        
