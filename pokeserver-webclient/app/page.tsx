@@ -7,7 +7,7 @@ import { votePokemon } from "./actions/votePokemon";
 import { FetchedPokemonDBEntry } from "./types/PokemonDBEntry";
 export default function PokemonVoteDisplay({}) {
   const defaultVoteText = "???";
-  const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>();
+  const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>(null);
   const [score, setScore] = useState(defaultVoteText);
   const [disableInput, setDisableInput] = useState(false);
 
@@ -33,24 +33,25 @@ export default function PokemonVoteDisplay({}) {
     getAnotherPokemon();
   }, [getAnotherPokemon]);
 
-  console.log("PokemonVoteDisplay", pokemon);
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      {pokemon === null ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+        <div className="flex justify-center items-center h-[360px] ">
+          {pokemon === null ? (
+            <div className="w-[370px] h-[370px] border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Image
+              src={pokemon ? pokemon?.image : "/file.svg"}
+              alt="Next.js logo"
+              width={360}
+              height={370}
+            />
+          )}
         </div>
-      ) : (<main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <div className="flex justify-center items-center w-full">
-          <Image
-            src={pokemon ? pokemon?.image : "/nextjs.svg"}
-            alt="Next.js logo"
-            width={360}
-            height={100}
-          />
-        </div>
-        <div className="flex justify-center items-center w-full">
-          <span className="text-2xl">{pokemon?.name.toUpperCase()}</span>
+          <span className="text-2xl">
+            {pokemon === null ? "Loading" : pokemon.name.toUpperCase()}
+          </span>
         </div>
         <div className="flex justify-center items-center w-full ">
           <span className="text-2xl">Score: {score} </span>
@@ -93,7 +94,6 @@ export default function PokemonVoteDisplay({}) {
           </button>
         </div>
       </main>
-          )}
     </div>
   );
 }

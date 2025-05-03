@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useRef, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, startTransition } from "react";
 import { FetchedPokemonDBEntry } from "../types/PokemonDBEntry";
 import { getRandomPokemon } from "../actions/getPokemon";
 
@@ -13,7 +13,6 @@ export default function PokemonClient({}) {
   const [failedCount, setFailedCount] = useState(0);
   const [score, setScore] = useState(0);
   const [textInput, setTextInput] = useState("");
-  const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const getAnotherPokemon = React.useCallback(() => {
@@ -61,7 +60,7 @@ export default function PokemonClient({}) {
         setImageVisible(true);
         setScore(score + 1);
       } else {
-        // Incorrect answer
+        // Incorrect answerJ
         const newFailed = failedCount + 1;
 
         setFailedCount(newFailed);
@@ -86,43 +85,42 @@ export default function PokemonClient({}) {
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      {pokemon === null || isPending ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+        <div className="flex justify-center items-center h-[360px] ">
+          {pokemon === null ? (
+            <div className="w-[360px] h-[360px] border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Image
+              src={pokemon ? pokemon?.image : "/file.svg"}
+              alt="Next.js logo"
+              width={360}
+              height={360}
+              className={`${imageVisible ? "" : "filter brightness-0 invert"}`}
+            />
+          )}
         </div>
-      ) : (
-        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-          <Image
-            src={pokemon?.image || "/file.svg"}
-            alt="Pokemon"
-            width={360}
-            height={360}
-            className={`${imageVisible ? "" : "filter brightness-0 invert"}`}
-          />
-          <textarea
-            ref={inputRef}
-            disabled={disableInput}
-            value={textInput}
-            rows={1}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className={`overflow-hidden rounded-lg focus:outline-none focus:ring-0 resize-none ${
-              failed ? "bg-red-700" : "bg-gray-700"
-            } text-white text-center text-base`}
-          />
-          <div className="flex gap-4 items-center flex-col sm:flex-row">
-            <button
-              disabled={isPending}
-              className="rounded-full border transition-colors hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-              onClick={getAnotherPokemon}
-            >
-              {isPending ? "Loading..." : "Get Another"}
-            </button>
-          </div>
-          <h2>Remaining Tries: {3 - failedCount}</h2>
-          <h2>Score: {score}</h2>
-        </main>
-      )}
+        <textarea
+          ref={inputRef}
+          disabled={disableInput}
+          value={textInput}
+          rows={1}
+          onChange={(e) => setTextInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className={`overflow-hidden rounded-lg focus:outline-none focus:ring-0 resize-none ${
+            failed ? "bg-red-700" : "bg-gray-700"
+          } text-white text-center text-base`}
+        />
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <button
+            className="rounded-full border transition-colors hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+            onClick={getAnotherPokemon}
+          >
+            Get Another
+          </button>
+        </div>
+        <h2>Remaining Tries: {3 - failedCount}</h2>
+        <h2>Score: {score}</h2>
+      </main>
     </div>
   );
 }
