@@ -1,29 +1,31 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useRef, useState, startTransition } from "react";
-import { FetchedPokemonDBEntry } from "../types/PokemonDBEntry";
+import React, { startTransition, useState } from "react";
 import { getRandomPokemon } from "../actions/getPokemon";
-
-export default function PokemonClient({}) {
+import { votePokemon } from "../actions/votePokemon";
+import { FetchedPokemonDBEntry } from "../types/PokemonDBEntry";
+export default function PokemonVoteDisplay({}) {
+  const defaultVoteText = "???";
   const [pokemon, setPokemon] = useState<FetchedPokemonDBEntry | null>(null);
-  const [imageVisible, setImageVisible] = useState(false);
+  const [score, setScore] = useState(defaultVoteText);
   const [disableInput, setDisableInput] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [failedCount, setFailedCount] = useState(0);
-  const [score, setScore] = useState(0);
-  const [textInput, setTextInput] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  async function sendVote(
+    pokemonId: number,
+    action: "up" | "down"
+  ): Promise<number> {
+    const results = await votePokemon(pokemonId, action);
+    setScore(String(results));
+    setDisableInput(true);
+    return 0;
+  }
 
   const getAnotherPokemon = React.useCallback(() => {
     startTransition(async () => {
       const newPokemon = await getRandomPokemon();
       setPokemon(newPokemon);
       setDisableInput(false);
-      setImageVisible(false);
-      setFailed(false);
-      setFailedCount(0);
-      setTextInput("");
     });
   }, []);
 
@@ -31,95 +33,66 @@ export default function PokemonClient({}) {
     getAnotherPokemon();
   }, [getAnotherPokemon]);
 
-  useEffect(() => {
-    const activeTag = document.activeElement?.tagName;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isLetter = /^[a-zA-Z]$/.test(e.key);
-      if (isLetter && activeTag !== "INPUT") {
-        inputRef.current?.focus();
-      }
-
-      if (e.key === "Enter" && document.activeElement?.tagName !== "INPUT") {
-        if (!imageVisible) {
-          setScore(score - 1);
-        }
-
-        getAnotherPokemon();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  });
-
-  function handleKeyDown(e: { key: string }) {
-    if (e.key === "Enter") {
-      // Correct answer
-      if (textInput.trim().toLowerCase() === pokemon?.name.toLowerCase()) {
-        setDisableInput(true);
-        setImageVisible(true);
-        setScore(score + 1);
-      } else {
-        // Incorrect answerJ
-        const newFailed = failedCount + 1;
-
-        setFailedCount(newFailed);
-        // Failed too many times
-        if (newFailed >= 3) {
-          setTextInput(pokemon?.name || "");
-          setDisableInput(true);
-          setImageVisible(true);
-          setFailed(false);
-          setScore(score - 1);
-          // Reset for next guess
-        } else {
-          setTextInput("");
-          setFailed(true);
-        }
-      }
-    } else if (failed) {
-      setFailed(false);
-      setTextInput("");
-    }
-  }
-
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <div className="flex justify-center items-center h-[360px] ">
           {pokemon === null ? (
-            <div className="w-[360px] h-[360px] border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-[370px] h-[370px] border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
           ) : (
             <Image
               src={pokemon ? pokemon?.image : "/file.svg"}
               alt="Next.js logo"
               width={360}
-              height={360}
-              className={`${imageVisible ? "" : "filter brightness-0 invert"}`}
+              height={370}
             />
           )}
         </div>
-        <textarea
-          ref={inputRef}
-          disabled={disableInput}
-          value={textInput}
-          rows={1}
-          onChange={(e) => setTextInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={`overflow-hidden rounded-lg focus:outline-none focus:ring-0 resize-none ${
-            failed ? "bg-red-700" : "bg-gray-700"
-          } text-white text-center text-base`}
-        />
+        <div className="flex justify-center items-center w-full">
+          <span className="text-2xl">
+            {pokemon === null ? "Loading" : pokemon.name.toUpperCase()}
+          </span>
+        </div>
+        <div className="flex justify-center items-center w-full ">
+          <span className="text-2xl">Score: {score} </span>
+        </div>
         <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <div className="flex gap-4 items-center flex-col sm:flex-row">
+            <button
+              disabled={disableInput}
+              className={`${
+                disableInput ? "bg-gray-500" : "bg-green-500"
+              } rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44`}
+              onClick={() => {
+                if (pokemon?.id !== undefined) sendVote(pokemon.id, "up");
+              }}
+            >
+              Upvote
+            </button>
+            <button
+              disabled={disableInput}
+              className={`${
+                disableInput ? "bg-gray-500" : "bg-red-500"
+              } rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44`}
+              onClick={() => {
+                if (pokemon?.id !== undefined) sendVote(pokemon.id, "down");
+              }}
+            >
+              Downvote
+            </button>
+          </div>
+        </div>
+        <div className="flex justify-center items-center w-full">
           <button
-            className="rounded-full border transition-colors hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            onClick={getAnotherPokemon}
+            className="bg-purple-600 rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+            onClick={() => {
+              setScore(defaultVoteText);
+              getAnotherPokemon();
+            }}
           >
-            Get Another
+            Next
           </button>
         </div>
-        <h2>Remaining Tries: {3 - failedCount}</h2>
-        <h2>Score: {score}</h2>
       </main>
     </div>
   );

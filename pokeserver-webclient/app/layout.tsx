@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         </a>
                     </li>
                     <li className="logo">
-                        <a href="./" className="nav-link">
+                        <a href="/voter" className="nav-link">
                             <span className="link-text logo-text">Vote</span>
 
                             <svg
