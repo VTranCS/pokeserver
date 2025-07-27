@@ -24,11 +24,14 @@ func (suite *PokemonRepoTestSuite) SetupSuite() {
 		log.Fatal(err)
 	}
 	suite.pgContainer = pgContainer
-	repository, err := NewRepository(suite.ctx, suite.pgContainer.ConnectionString)
+	logger := NewLogger()
+	repository, err := NewRepository(suite.ctx, suite.pgContainer.ConnectionString, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
 	suite.repository = repository
+	// Ensure the table exists
+	suite.repository.createPokeVotesTable(suite.ctx)
 }
 
 func (suite *PokemonRepoTestSuite) TearDownSuite() {
@@ -47,32 +50,25 @@ func (suite *PokemonRepoTestSuite) TearDownTest() {
 func (suite *PokemonRepoTestSuite) TestCreatePokemon() {
 	t := suite.T()
 
-	pokemonCreated, err := suite.repository.createPokemonVote(suite.ctx, Pokemon{
+	pokemon := Pokemon{
 		Name: "Chari",
-		Sprites: struct {
-			BackDefault  string `json:"back_default"`
-			FrontDefault string `json:"front_default"`
-		}{
-			FrontDefault: "url",
-		},
-		ID: 121,
-	})
+		ID:   121,
+	}
+	pokemon.Sprites.FrontDefault = "url"
+
+	pokemonCreated, err := suite.repository.createPokemonVote(suite.ctx, pokemon)
 	assert.NoError(t, err)
 	assert.True(t, pokemonCreated)
 }
 
 func (suite *PokemonRepoTestSuite) TestGetAllPokemon() {
 	t := suite.T()
-	suite.repository.createPokemonVote(suite.ctx, Pokemon{
+	pokemon := Pokemon{
 		Name: "Chari",
-		Sprites: struct {
-			BackDefault  string `json:"back_default"`
-			FrontDefault string `json:"front_default"`
-		}{
-			FrontDefault: "url",
-		},
-		ID: 121,
-	})
+		ID:   121,
+	}
+	pokemon.Sprites.FrontDefault = "url"
+	suite.repository.createPokemonVote(suite.ctx, pokemon)
 	allPokemon, err := suite.repository.getAllPokemonDBEntry(suite.ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(allPokemon))
@@ -80,18 +76,14 @@ func (suite *PokemonRepoTestSuite) TestGetAllPokemon() {
 
 func (suite *PokemonRepoTestSuite) TestGetPokemonById() {
 	t := suite.T()
-	_, err := suite.repository.createPokemonVote(suite.ctx, Pokemon{
+	pokemon := Pokemon{
 		Name: "Chari",
-		Sprites: struct {
-			BackDefault  string `json:"back_default"`
-			FrontDefault string `json:"front_default"`
-		}{
-			FrontDefault: "url",
-		},
-		ID: 121,
-	})
+		ID:   121,
+	}
+	pokemon.Sprites.FrontDefault = "url"
+	_, err := suite.repository.createPokemonVote(suite.ctx, pokemon)
 	assert.NoError(t, err)
-	pokemon, err := suite.repository.getPokemonDBEntryById(suite.ctx, 121)
+	pokemonDB, err := suite.repository.getPokemonDBEntryById(suite.ctx, 121)
 	testPokemon := PokeDBEntry{
 		Id:   121,
 		Name: "Chari",
@@ -99,8 +91,8 @@ func (suite *PokemonRepoTestSuite) TestGetPokemonById() {
 		Url:  "url",
 	}
 	assert.NoError(t, err)
-	assert.NotNil(t, pokemon)
-	assert.Equal(t, pokemon, testPokemon)
+	assert.NotNil(t, pokemonDB)
+	assert.Equal(t, pokemonDB, testPokemon)
 }
 
 func (suite *PokemonRepoTestSuite) TestGetNonExistantPokemon() {

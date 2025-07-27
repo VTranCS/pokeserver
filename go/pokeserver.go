@@ -6,40 +6,101 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/spf13/viper"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var repo *Repository
 
 func main() {
-	viper.SetConfigFile("./.env")
-	viper.SetConfigType("yaml")
-	viper.ReadInConfig()
+	// Initialize logger
+	logger := NewLogger()
+	logger.Info("Starting pokeserver application")
 
-	err := viper.ReadInConfig()
+	// Load configuration
+	config, err := LoadConfig()
 	if err != nil {
-		log.Fatalf("Error reading config file: %s", err)
+		logger.WithError(err).Error("Failed to load configuration")
+		log.Fatalf("Error loading configuration: %s", err)
 	}
 
-	repo, err = NewRepository(context.Background(), viper.GetString("database.url"))
+	// Initialize database repository
+	ctx := context.Background()
+	repo, err = NewRepository(ctx, config.Database.URL, logger)
 	if err != nil {
+		logger.WithError(err).Error("Failed to connect to database")
 		log.Fatalf("Error connecting to database: %s", err)
 	}
+	defer repo.Close()
 
-	repo.createPokeVotesTable(context.Background())
-	http.HandleFunc("/getall", handleGetAllPokemon)
-	http.HandleFunc("/getpokemon", handleGetPokemon)
-	http.HandleFunc("/vote", handleVote)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/", handlePokeStop)
+	// Initialize Pokemon client
+	pokeClient := NewPokeClient(config.PokeAPI.URL, config.PokeAPI.Max, logger)
 
-	port := fmt.Sprintf(":%s", viper.GetString("server.port"))
-	fmt.Printf("Started poke app on http://localhost%s", port)
-	httperr := http.ListenAndServe(port, nil)
-	if errors.Is(httperr, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
+	// Initialize Pokemon service
+	pokemonService := NewPokemonService(repo, pokeClient, logger)
+
+	// Initialize database
+	if err := pokemonService.InitializeDatabase(ctx); err != nil {
+		logger.WithError(err).Error("Failed to initialize database")
+		log.Fatalf("Error initializing database: %s", err)
 	}
+
+	// Create HTTP handlers
+	handlers := NewHandlers(pokemonService, logger)
+
+	// Setup middleware
+	middleware := ChainMiddleware(
+		RecoveryMiddleware(logger),
+		LoggingMiddleware(logger),
+		CORSMiddleware(),
+	)
+
+	// Setup routes
+	mux := http.NewServeMux()
+	mux.Handle("/getall", middleware(http.HandlerFunc(handlers.HandleGetAllPokemon)))
+	mux.Handle("/getpokemon", middleware(http.HandlerFunc(handlers.HandleGetPokemon)))
+	mux.Handle("/vote", middleware(http.HandlerFunc(handlers.HandleVote)))
+	mux.Handle("/health", middleware(http.HandlerFunc(handlers.HandleHealth)))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.Handle("/", middleware(http.HandlerFunc(handlers.HandlePokeStop)))
+
+	// Create server
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", config.Server.Port),
+		Handler: mux,
+	}
+
+	// Start server in a goroutine
+	go func() {
+		logger.WithFields(map[string]any{
+			"port": config.Server.Port,
+		}).Info("Starting HTTP server")
+		
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.WithError(err).Error("HTTP server failed to start")
+			log.Fatalf("HTTP server failed to start: %s", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutting down server...")
+
+	// Give the server a timeout to finish handling requests
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("Server forced to shutdown")
+		log.Fatalf("Server forced to shutdown: %s", err)
+	}
+
+	logger.Info("Server exited")
 }
 
 type PokeDBEntry struct {
