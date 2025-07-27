@@ -76,7 +76,14 @@ func (s *PokemonService) VotePokemon(ctx context.Context, pokemonID int, directi
 		return PokeDBEntry{}, fmt.Errorf("invalid vote direction: %s", direction)
 	}
 
-	_, err := s.repo.UpdatePokemonVote(ctx, pokemonID, vote)
+	// First check if Pokemon exists
+	_, err := s.repo.GetPokemonDBEntryById(ctx, pokemonID)
+	if err != nil {
+		s.logger.WithError(err).Error("Pokemon not found")
+		return PokeDBEntry{}, fmt.Errorf("Pokemon with ID %d not found", pokemonID)
+	}
+
+	_, err = s.repo.UpdatePokemonVote(ctx, pokemonID, vote)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to update Pokemon vote")
 		return PokeDBEntry{}, fmt.Errorf("failed to update Pokemon vote: %w", err)

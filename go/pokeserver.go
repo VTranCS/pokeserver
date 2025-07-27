@@ -1,3 +1,13 @@
+// Package main implements a Pokemon voting server with clean architecture.
+//
+// The server provides REST API endpoints for:
+//   - Getting random Pokemon from PokeAPI
+//   - Voting on Pokemon (up/down votes)  
+//   - Retrieving all Pokemon with vote counts
+//   - Health checks
+//
+// The application follows clean architecture principles with proper
+// separation of concerns, dependency injection, and structured logging.
 package main
 
 import (
@@ -103,9 +113,10 @@ func main() {
 	logger.Info("Server exited")
 }
 
+// PokeDBEntry represents a Pokemon entry in the database with vote information.
 type PokeDBEntry struct {
-	Id   int
-	Name string
-	Vote int
-	Url  string
+	Id   int    `json:"id"`   // Pokemon ID from PokeAPI
+	Name string `json:"name"` // Pokemon name
+	Vote int    `json:"vote"` // Current vote count
+	Url  string `json:"url"`  // URL to Pokemon sprite image
 }
